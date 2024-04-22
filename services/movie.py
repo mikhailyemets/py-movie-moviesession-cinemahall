@@ -1,5 +1,6 @@
 from django.db.models import Q, QuerySet
 from db.models import Movie
+from django.db import IntegrityError
 
 
 def get_movies(
@@ -36,12 +37,18 @@ def create_movie(
         genres_ids: list[int] = None,
         actors_ids: list[int] = None
 ) -> None:
-    movie = Movie.objects.create(
-        title=movie_title,
-        description=movie_description,
-    )
-    if genres_ids:
-        movie.genres.set(genres_ids)
+    movie = None
+    try:
+        movie = Movie.objects.create(
+            title=movie_title,
+            description=movie_description,
+        )
+        if genres_ids:
+            movie.genres.set(genres_ids)
 
-    if actors_ids:
-        movie.actors.set(actors_ids)
+        if actors_ids:
+            movie.actors.set(actors_ids)
+    except IntegrityError:
+        if movie:
+            print("Integrity error, can not add this movie to db")
+            movie.delete()
